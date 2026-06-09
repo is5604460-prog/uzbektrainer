@@ -1,0 +1,723 @@
+<!DOCTYPE html>
+<html lang="uz">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+<title>O'zbek tili — Тренажёр</title>
+<style>
+@import url('https://fonts.googleapis.com/css2?family=Unbounded:wght@400;700;900&family=Onest:wght@300;400;500&display=swap');
+:root {
+  --bg: #0a0a12;
+  --surface: #12121e;
+  --card: #1a1a2e;
+  --border: #2a2a45;
+  --accent: #7c6cf8;
+  --accent2: #e056a0;
+  --green: #3eded4;
+  --red: #ff4f6d;
+  --text: #e8e8f5;
+  --muted: #7070a0;
+}
+* { margin: 0; padding: 0; box-sizing: border-box; -webkit-tap-highlight-color: transparent; }
+body {
+  font-family: 'Onest', -apple-system, sans-serif;
+  background: var(--bg);
+  color: var(--text);
+  min-height: 100vh;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+}
+body::before {
+  content: '';
+  position: fixed;
+  inset: 0;
+  background-image: url("data:image/svg+xml,%3Csvg viewBox='0 0 256 256' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='noise'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.9' numOctaves='4' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23noise)' opacity='0.04'/%3E%3C/svg%3E");
+  pointer-events: none;
+  z-index: 0;
+}
+.orb { position: fixed; border-radius: 50%; filter: blur(80px); opacity: 0.12; pointer-events: none; z-index: 0; }
+.orb1 { width: 500px; height: 500px; background: var(--accent); top: -150px; right: -100px; }
+.orb2 { width: 400px; height: 400px; background: var(--accent2); bottom: -100px; left: -100px; }
+header { width: 100%; max-width: 860px; padding: 40px 24px 20px; position: relative; z-index: 1; }
+.logo { font-family: 'Unbounded', sans-serif; font-size: 11px; font-weight: 700; letter-spacing: 0.3em; color: var(--accent); text-transform: uppercase; margin-bottom: 8px; }
+h1 { font-family: 'Unbounded', sans-serif; font-size: clamp(22px, 4vw, 36px); font-weight: 900; line-height: 1.1; background: linear-gradient(135deg, var(--text) 0%, var(--accent) 100%); -webkit-background-clip: text; -webkit-text-fill-color: transparent; background-clip: text; }
+.stats-bar { width: 100%; max-width: 860px; padding: 0 24px; display: flex; gap: 16px; flex-wrap: wrap; align-items: center; position: relative; z-index: 1; margin-bottom: 24px; }
+.stat-chip { background: var(--card); border: 1px solid var(--border); border-radius: 100px; padding: 8px 16px; font-size: 13px; display: flex; align-items: center; gap: 8px; }
+.stat-chip .val { font-family: 'Unbounded', sans-serif; font-size: 15px; font-weight: 700; }
+.stat-chip.correct .val { color: var(--green); }
+.stat-chip.wrong .val { color: var(--red); }
+.stat-chip.total .val { color: var(--accent); }
+.progress-wrap { flex: 1; min-width: 160px; height: 6px; background: var(--border); border-radius: 100px; overflow: hidden; }
+.progress-bar { height: 100%; background: linear-gradient(90deg, var(--accent), var(--accent2)); border-radius: 100px; transition: width 0.4s ease; }
+.controls { width: 100%; max-width: 860px; padding: 0 24px; display: flex; gap: 12px; flex-wrap: wrap; margin-bottom: 16px; position: relative; z-index: 1; }
+.btn { font-family: 'Onest', -apple-system, sans-serif; font-size: 13px; font-weight: 500; padding: 10px 20px; border-radius: 10px; border: 1px solid var(--border); cursor: pointer; transition: all 0.2s; background: var(--card); color: var(--text); }
+.btn.primary { background: var(--accent); border-color: var(--accent); color: white; font-weight: 700; }
+.btn:hover { opacity: 0.85; }
+.mode-selector { display: flex; gap: 0; border: 1px solid var(--border); border-radius: 10px; overflow: hidden; }
+.mode-btn { font-family: 'Onest', -apple-system, sans-serif; font-size: 12px; padding: 10px 16px; border: none; cursor: pointer; background: var(--card); color: var(--muted); transition: all 0.2s; border-right: 1px solid var(--border); }
+.mode-btn:last-child { border-right: none; }
+.mode-btn.active { background: var(--accent); color: white; font-weight: 600; }
+/* Topic filter */
+.topic-bar { width: 100%; max-width: 860px; padding: 0 24px; display: flex; gap: 8px; flex-wrap: wrap; margin-bottom: 20px; position: relative; z-index: 1; }
+.topic-btn { font-family: 'Onest', sans-serif; font-size: 11px; padding: 6px 14px; border-radius: 100px; border: 1px solid var(--border); cursor: pointer; background: var(--card); color: var(--muted); transition: all 0.2s; }
+.topic-btn.active { background: rgba(124,108,248,0.2); border-color: var(--accent); color: var(--accent); font-weight: 600; }
+.quiz-wrap { width: 100%; max-width: 860px; padding: 0 24px 60px; position: relative; z-index: 1; }
+.question-card { background: var(--card); border: 1px solid var(--border); border-radius: 20px; padding: 32px; margin-bottom: 20px; position: relative; overflow: hidden; animation: slideUp 0.35s cubic-bezier(0.22, 1, 0.36, 1); }
+@keyframes slideUp { from { opacity: 0; transform: translateY(20px); } to { opacity: 1; transform: translateY(0); } }
+.q-num { font-family: 'Unbounded', sans-serif; font-size: 10px; font-weight: 700; color: var(--muted); letter-spacing: 0.2em; margin-bottom: 8px; }
+.q-topic-tag { display: inline-block; background: rgba(124,108,248,0.12); border: 1px solid rgba(124,108,248,0.25); border-radius: 6px; padding: 2px 8px; font-size: 10px; color: var(--accent); margin-bottom: 12px; font-family: 'Unbounded', sans-serif; letter-spacing: 0.05em; }
+.q-approx-badge { display: inline-block; background: rgba(224,86,160,0.12); border: 1px solid rgba(224,86,160,0.3); border-radius: 6px; padding: 2px 8px; font-size: 10px; color: var(--accent2); margin-bottom: 12px; margin-left: 6px; font-family: 'Unbounded', sans-serif; letter-spacing: 0.03em; }
+.q-text { font-size: 17px; font-weight: 500; line-height: 1.65; color: var(--text); }
+.answers { display: flex; flex-direction: column; gap: 10px; }
+.answer-btn { width: 100%; text-align: left; padding: 16px 20px; border-radius: 14px; border: 1.5px solid var(--border); background: var(--surface); color: var(--text); font-family: 'Onest', -apple-system, sans-serif; font-size: 15px; line-height: 1.5; cursor: pointer; transition: all 0.2s; position: relative; display: flex; align-items: flex-start; gap: 12px; }
+.answer-btn::before { content: ''; flex-shrink: 0; width: 22px; height: 22px; border-radius: 50%; border: 2px solid var(--border); transition: all 0.2s; margin-top: 1px; }
+.answer-btn.correct { border-color: var(--green); background: rgba(62,222,212,0.08); }
+.answer-btn.correct::before { background: var(--green); border-color: var(--green); box-shadow: 0 0 12px rgba(62,222,212,0.4); }
+.answer-btn.wrong { border-color: var(--red); background: rgba(255,79,109,0.08); }
+.answer-btn.wrong::before { background: var(--red); border-color: var(--red); }
+.answer-btn:disabled { cursor: not-allowed; opacity: 0.85; }
+.feedback { border-radius: 14px; padding: 16px 20px; font-size: 14px; line-height: 1.6; display: none; animation: fadeIn 0.3s ease; }
+@keyframes fadeIn { from { opacity: 0; } to { opacity: 1; } }
+.feedback.show { display: flex; align-items: flex-start; gap: 12px; }
+.feedback.ok { background: rgba(62,222,212,0.1); border: 1px solid rgba(62,222,212,0.3); color: var(--green); }
+.feedback.err { background: rgba(255,79,109,0.1); border: 1px solid rgba(255,79,109,0.3); color: var(--red); }
+.feedback .icon { font-size: 20px; flex-shrink: 0; }
+.feedback .correct-ans { font-weight: 600; color: var(--green); }
+.nav-row { display: flex; justify-content: flex-end; align-items: center; margin-top: 20px; gap: 12px; }
+.result-screen { display: none; text-align: center; padding: 60px 24px; }
+.result-screen.show { display: block; }
+.result-big { font-family: 'Unbounded', sans-serif; font-size: clamp(48px, 10vw, 80px); font-weight: 900; background: linear-gradient(135deg, var(--accent), var(--accent2)); -webkit-background-clip: text; -webkit-text-fill-color: transparent; background-clip: text; line-height: 1; margin-bottom: 12px; }
+.result-sub { font-size: 18px; color: var(--muted); margin-bottom: 32px; }
+.result-detail { display: flex; justify-content: center; gap: 32px; margin-bottom: 40px; flex-wrap: wrap; }
+.result-item { text-align: center; }
+.result-item .num { font-family: 'Unbounded', sans-serif; font-size: 32px; font-weight: 900; }
+.result-item .lbl { font-size: 13px; color: var(--muted); margin-top: 4px; }
+.browse-card { background: var(--card); border: 1px solid var(--border); border-radius: 20px; padding: 28px; margin-bottom: 12px; cursor: pointer; transition: all 0.2s; position: relative; }
+.browse-card .bq { font-size: 16px; line-height: 1.5; }
+.browse-card .ba { margin-top: 14px; padding-top: 14px; border-top: 1px solid var(--border); color: var(--green); font-size: 15px; display: none; }
+.browse-card.open .ba { display: block; }
+.browse-card .toggle { position: absolute; right: 20px; top: 22px; color: var(--muted); font-size: 20px; transition: transform 0.2s; }
+.browse-card.open .toggle { transform: rotate(180deg); }
+.search-wrap { width: 100%; max-width: 860px; padding: 0 24px; position: relative; z-index: 1; margin-bottom: 16px; display: none; }
+.search-wrap.show { display: block; }
+.search-input { width: 100%; padding: 14px 20px; border-radius: 14px; border: 1.5px solid var(--border); background: var(--card); color: var(--text); font-family: 'Onest', -apple-system, sans-serif; font-size: 15px; outline: none; transition: border-color 0.2s; -webkit-appearance: none; }
+.search-input:focus { border-color: var(--accent); }
+.search-input::placeholder { color: var(--muted); }
+#wrongList { display: flex; flex-direction: column; gap: 10px; }
+</style>
+</head>
+<body>
+<div class="orb orb1"></div>
+<div class="orb orb2"></div>
+
+<header>
+  <div class="logo">O'zbek tili · Сессия 2025</div>
+  <h1>Тренажёр по тестам</h1>
+</header>
+
+<div class="stats-bar">
+  <div class="stat-chip total">✦ <span class="val" id="statTotal">0</span> вопросов</div>
+  <div class="stat-chip correct">✓ <span class="val" id="statCorrect">0</span></div>
+  <div class="stat-chip wrong">✗ <span class="val" id="statWrong">0</span></div>
+  <div class="progress-wrap"><div class="progress-bar" id="progressBar" style="width:0%"></div></div>
+</div>
+
+<div class="controls">
+  <div class="mode-selector">
+    <button class="mode-btn active" id="modeQuiz">🎯 Тест</button>
+    <button class="mode-btn" id="modeBrowse">📖 Учить</button>
+    <button class="mode-btn" id="modeWrong">❌ Ошибки</button>
+  </div>
+  <button class="btn primary" id="btnRestart">↺ Заново</button>
+  <button class="btn" id="btnShuffle">🔀 Перемешать</button>
+</div>
+
+<div class="topic-bar" id="topicBar"></div>
+
+<div class="search-wrap" id="searchWrap">
+  <input class="search-input" id="searchInput" placeholder="Поиск по вопросам...">
+</div>
+
+<div class="quiz-wrap" id="quizWrap">
+  <div id="quizMode">
+    <div class="question-card" id="questionCard">
+      <div class="q-num" id="qNum">Вопрос 1 / 0</div>
+      <div id="qTopicTag"></div>
+      <div class="q-text" id="qText">Загрузка...</div>
+    </div>
+    <div class="answers" id="answers"></div>
+    <div class="feedback" id="feedback">
+      <span class="icon"></span>
+      <span class="msg"></span>
+    </div>
+    <div class="nav-row">
+      <button class="btn primary" id="nextBtn" style="display:none">Следующий →</button>
+    </div>
+  </div>
+
+  <div class="result-screen" id="resultScreen">
+    <div class="result-big" id="resultPct">0%</div>
+    <div class="result-sub" id="resultMsg">Тест завершён!</div>
+    <div class="result-detail">
+      <div class="result-item"><div class="num" style="color:var(--green)" id="resCorrect">0</div><div class="lbl">Правильно</div></div>
+      <div class="result-item"><div class="num" style="color:var(--red)" id="resWrong">0</div><div class="lbl">Ошибки</div></div>
+      <div class="result-item"><div class="num" style="color:var(--accent)" id="resTotal">0</div><div class="lbl">Вопросов</div></div>
+    </div>
+    <button class="btn primary" id="btnRestartResult" style="margin-right:12px">↺ Снова</button>
+    <button class="btn" id="btnWrongResult">Разобрать ошибки</button>
+  </div>
+
+  <div id="browseMode" style="display:none">
+    <div id="browseList"></div>
+  </div>
+
+  <div id="wrongMode" style="display:none">
+    <div id="wrongList"></div>
+  </div>
+</div>
+
+<script>
+// ⚠️ Вопросы с пометкой approx:true — варианты ПРИДУМАНЫ по контексту.
+// На реальном экзамене формулировки вариантов могут отличаться!
+
+const ALL_QUESTIONS = [
+
+// ════════════════════════════════════════════════
+// БЛОК 1: ВЕРНО / НЕВЕРНО (вопросы 1–100)
+// Формат: утверждение + 2 варианта
+// ════════════════════════════════════════════════
+
+// --- Переводы RU → UZ ---
+{topic:"Перевод RU→UZ", q:'«Побочные действие» so\'zi o\'zbekchaga «Muolaja ta\'siri» deb tarjima qilinadi. Bu to\'g\'rimi?', correct:"Нет, неверно", wrong:["Да, верно"]},
+{topic:"Перевод RU→UZ", q:'«Мышечная ткань» so\'zi o\'zbekchaga «Mushak to\'qimasi» deb tarjima qilinadi. Bu to\'g\'rimi?', correct:"Да, верно", wrong:["Нет, неверно"]},
+{topic:"Перевод RU→UZ", q:'«Нервная система» so\'zi o\'zbekchaga «Asab hujayrasi» deb tarjima qilinadi. Bu to\'g\'rimi?', correct:"Нет, неверно", wrong:["Да, верно"]},
+{topic:"Перевод RU→UZ", q:'«Челюсть» so\'zi o\'zbekchaga «Jag\'» deb tarjima qilinadi. Bu to\'g\'rimi?', correct:"Да, верно", wrong:["Нет, неверно"]},
+{topic:"Перевод RU→UZ", q:'«Воспаление» so\'zi o\'zbekchaga «Zararlanish» deb tarjima qilinadi. Bu to\'g\'rimi?', correct:"Нет, неверно", wrong:["Да, верно"]},
+{topic:"Перевод RU→UZ", q:'«Желудок» so\'zi o\'zbekchaga «O\'t pufagi» deb tarjima qilinadi. Bu to\'g\'rimi?', correct:"Нет, неверно", wrong:["Да, верно"]},
+{topic:"Перевод RU→UZ", q:'«Десна» so\'zi o\'zbekchaga «Milk» deb tarjima qilinadi. Bu to\'g\'rimi?', correct:"Да, верно", wrong:["Нет, неверно"]},
+{topic:"Перевод RU→UZ", q:'«Ротовая полость» so\'zi o\'zbekchaga «Og\'iz bo\'shlig\'i» deb tarjima qilinadi. Bu to\'g\'rimi?', correct:"Да, верно", wrong:["Нет, неверно"]},
+{topic:"Перевод RU→UZ", q:'«Диагноз» so\'zi o\'zbekchaga «Tashxis» deb tarjima qilinadi. Bu to\'g\'rimi?', correct:"Да, верно", wrong:["Нет, неверно"]},
+{topic:"Перевод RU→UZ", q:'«Вывод» so\'zi o\'zbekchaga «Xulosa» deb tarjima qilinadi. Bu to\'g\'rimi?', correct:"Да, верно", wrong:["Нет, неверно"]},
+{topic:"Перевод RU→UZ", q:'«Гарантия» so\'zi o\'zbekchaga «Ishonch» deb tarjima qilinadi. Bu to\'g\'rimi?', correct:"Нет, неверно", wrong:["Да, верно"]},
+{topic:"Перевод RU→UZ", q:'«Печень» so\'zi o\'zbekchaga «Jigar» deb tarjima qilinadi. Bu to\'g\'rimi?', correct:"Да, верно", wrong:["Нет, неверно"]},
+{topic:"Перевод RU→UZ", q:'«Движение» so\'zi o\'zbekchaga «Intilish» deb tarjima qilinadi. Bu to\'g\'rimi?', correct:"Нет, неверно", wrong:["Да, верно"]},
+{topic:"Перевод RU→UZ", q:'«Единство» so\'zi o\'zbekchaga «Hamkorlik» deb tarjima qilinadi. Bu to\'g\'rimi?', correct:"Нет, неверно", wrong:["Да, верно"]},
+{topic:"Перевод RU→UZ", q:'«Желание» so\'zi o\'zbekchaga «O\'zgarish» deb tarjima qilinadi. Bu to\'g\'rimi?', correct:"Нет, неверно", wrong:["Да, верно"]},
+{topic:"Перевод RU→UZ", q:'«Заботливый» so\'zi o\'zbekchaga «G\'amxo\'r» deb tarjima qilinadi. Bu to\'g\'rimi?', correct:"Да, верно", wrong:["Нет, неверно"]},
+{topic:"Перевод RU→UZ", q:'«Заниматься» fe\'li o\'zbekchaga «Shug\'ullanmoq» deb tarjima qilinadi. Bu to\'g\'rimi?', correct:"Да, верно", wrong:["Нет, неверно"]},
+{topic:"Перевод RU→UZ", q:'«Заполнять» so\'zi o\'zbekchaga «Topshirmoq» deb tarjima qilinadi. Bu to\'g\'rimi?', correct:"Нет, неверно", wrong:["Да, верно"]},
+{topic:"Перевод RU→UZ", q:'«Измерять» so\'zi o\'zbekchaga «O\'lchamoq» deb tarjima qilinadi. Bu to\'g\'rimi?', correct:"Да, верно", wrong:["Нет, неверно"]},
+{topic:"Перевод RU→UZ", q:'«Количество» so\'zi o\'zbekchaga «Kafolat» deb tarjima qilinadi. Bu to\'g\'rimi?', correct:"Нет, неверно", wrong:["Да, верно"]},
+{topic:"Перевод RU→UZ", q:'«Конфликт» ruscha so\'zi o\'zbekchaga «Kelishuv» deb tarjima qilinadi. Bu to\'g\'rimi?', correct:"Нет, неверно", wrong:["Да, верно"]},
+{topic:"Перевод RU→UZ", q:'«Категория» so\'zi o\'zbekchaga «Toifa» deb tarjima qilinadi. Bu to\'g\'rimi?', correct:"Да, верно", wrong:["Нет, неверно"]},
+{topic:"Перевод RU→UZ", q:'«Слюна» so\'zi o\'zbekchaga «So\'lak» deb tarjima qilinadi. Bu to\'g\'rimi?', correct:"Да, верно", wrong:["Нет, неверно"]},
+{topic:"Перевод RU→UZ", q:'«Жидкость» so\'zi o\'zbekchaga «Suyuqlik» deb tarjima qilinadi. Bu to\'g\'rimi?', correct:"Да, верно", wrong:["Нет, неверно"]},
+{topic:"Перевод RU→UZ", q:'«Спинной мозг» so\'zi o\'zbekchaga «Orqa miya» deb tarjima qilinadi. Bu to\'g\'rimi?', correct:"Да, верно", wrong:["Нет, неверно"]},
+{topic:"Перевод RU→UZ", q:'«Начинать» so\'zi o\'zbekchaga «To\'xtatmoq» deb tarjima qilinadi. Bu to\'g\'rimi?', correct:"Нет, неверно", wrong:["Да, верно"]},
+{topic:"Перевод RU→UZ", q:'«Натуральный продукт» so\'zi o\'zbekchaga «Tabiiy mahsulot» deb tarjima qilinadi. Bu to\'g\'rimi?', correct:"Да, верно", wrong:["Нет, неверно"]},
+{topic:"Перевод RU→UZ", q:'«Обмен» ruscha so\'zi o\'zbekchaga «Oshirmoq» deb tarjima qilinadi. Bu to\'g\'rimi?', correct:"Нет, неверно", wrong:["Да, верно"]},
+{topic:"Перевод RU→UZ", q:'«Обозначать» so\'zi o\'zbekchaga «Ko\'rsatmoq» deb tarjima qilinadi. Bu to\'g\'rimi?', correct:"Да, верно", wrong:["Нет, неверно"]},
+{topic:"Перевод RU→UZ", q:'«Грудная клетка» so\'zi o\'zbekchaga «Ko\'krak qafasi» deb tarjima qilinadi. Bu to\'g\'rimi?', correct:"Да, верно", wrong:["Нет, неверно"]},
+{topic:"Перевод RU→UZ", q:'«Ограничение» ruscha so\'zi o\'zbekchaga «Cheklov» deb tarjima qilinadi. Bu to\'g\'rimi?', correct:"Да, верно", wrong:["Нет, неверно"]},
+{topic:"Перевод RU→UZ", q:'«Опасный» so\'zi o\'zbekchaga «Zararli» deb tarjima qilinadi. Bu to\'g\'rimi?', correct:"Нет, неверно", wrong:["Да, верно"]},
+{topic:"Перевод RU→UZ", q:'«Общество» so\'zi o\'zbekchaga «Muhit» deb tarjima qilinadi. Bu to\'g\'rimi?', correct:"Нет, неверно", wrong:["Да, верно"]},
+{topic:"Перевод RU→UZ", q:'«Понимание» ruscha so\'zi o\'zbekchaga «Tushunish» deb tarjima qilinadi. Bu to\'g\'rimi?', correct:"Да, верно", wrong:["Нет, неверно"]},
+{topic:"Перевод RU→UZ", q:'«Клетка» so\'zi o\'zbekchaga «Hujayra» deb tarjima qilinadi. Bu to\'g\'rimi?', correct:"Да, верно", wrong:["Нет, неверно"]},
+{topic:"Перевод RU→UZ", q:'«Промышленность» so\'zi o\'zbekchaga «Sanoat» deb tarjima qilinadi. Bu to\'g\'rimi?', correct:"Да, верно", wrong:["Нет, неверно"]},
+{topic:"Перевод RU→UZ", q:'«Преимущество» so\'zi o\'zbekchaga «Manfaat» deb tarjima qilinadi. Bu to\'g\'rimi?', correct:"Нет, неверно", wrong:["Да, верно"]},
+{topic:"Перевод RU→UZ", q:'«Применять» so\'zi o\'zbekchaga «Tasdiqlamoq» deb tarjima qilinadi. Bu to\'g\'rimi?', correct:"Нет, неверно", wrong:["Да, верно"]},
+{topic:"Перевод RU→UZ", q:'«Подготовить» so\'zi o\'zbekchaga «Tayyorlamoq» deb tarjima qilinadi. Bu to\'g\'rimi?', correct:"Да, верно", wrong:["Нет, неверно"]},
+{topic:"Перевод RU→UZ", q:'«Руководство» so\'zi o\'zbekchaga «Ta\'sischi» deb tarjima qilinadi. Bu to\'g\'rimi?', correct:"Нет, неверно", wrong:["Да, верно"]},
+{topic:"Перевод RU→UZ", q:'«Результат» so\'zi o\'zbekchaga «Natija» deb tarjima qilinadi. Bu to\'g\'rimi?', correct:"Да, верно", wrong:["Нет, неверно"]},
+{topic:"Перевод RU→UZ", q:'«Расширение» so\'zi o\'zbekchaga «Qisqarmoq» deb tarjima qilinadi. Bu to\'g\'rimi?', correct:"Нет, неверно", wrong:["Да, верно"]},
+{topic:"Перевод RU→UZ", q:'«Сотрудник» so\'zi o\'zbekchaga «Hamkasb» deb tarjima qilinadi. Bu to\'g\'rimi?', correct:"Да, верно", wrong:["Нет, неверно"]},
+{topic:"Перевод RU→UZ", q:'«Спасти» so\'zi o\'zbekchaga «Qutqarmoq» deb tarjima qilinadi. Bu to\'g\'rimi?', correct:"Да, верно", wrong:["Нет, неверно"]},
+{topic:"Перевод RU→UZ", q:'«Специально» so\'zi o\'zbekchaga «Astoydil» deb tarjima qilinadi. Bu to\'g\'rimi?', correct:"Нет, неверно", wrong:["Да, верно"]},
+{topic:"Перевод RU→UZ", q:'«Ситуация» so\'zi o\'zbekchaga «Vaziyat» deb tarjima qilinadi. Bu to\'g\'rimi?', correct:"Да, верно", wrong:["Нет, неверно"]},
+{topic:"Перевод RU→UZ", q:'«Стремиться» fe\'li o\'zbekchaga «Intilmoq» deb tarjima qilinadi. Bu to\'g\'rimi?', correct:"Да, верно", wrong:["Нет, неверно"]},
+{topic:"Перевод RU→UZ", q:'«Способ применения» so\'zi o\'zbekchaga «Qo\'llash usuli» deb tarjima qilinadi. Bu to\'g\'rimi?', correct:"Да, верно", wrong:["Нет, неверно"]},
+{topic:"Перевод RU→UZ", q:'«Талант» so\'zi o\'zbekchaga «Tanlov» deb tarjima qilinadi. Bu to\'g\'rimi?', correct:"Нет, неверно", wrong:["Да, верно"]},
+{topic:"Перевод RU→UZ", q:'«Удовлетворенность» so\'zi o\'zbekchaga «Taassurot» deb tarjima qilinadi. Bu to\'g\'rimi?', correct:"Нет, неверно", wrong:["Да, верно"]},
+
+// --- Переводы UZ → RU ---
+{topic:"Перевод UZ→RU", q:'«Ahamiyat» so\'zi ruschaga «Отражение» deb tarjima qilinadi. Bu to\'g\'rimi?', correct:"Нет, неверно", wrong:["Да, верно"]},
+{topic:"Перевод UZ→RU", q:'«Avaylamoq» so\'zi ruschaga «Оберегать» deb tarjima qilinadi. Bu to\'g\'rimi?', correct:"Да, верно", wrong:["Нет, неверно"]},
+{topic:"Перевод UZ→RU", q:'«Aholi» so\'zi ruschaga «Население» deb tarjima qilinadi. Bu to\'g\'rimi?', correct:"Да, верно", wrong:["Нет, неверно"]},
+{topic:"Перевод UZ→RU", q:'«Batafsil» so\'zi ruschaga «Подробно» deb tarjima qilinadi. Bu to\'g\'rimi?', correct:"Да, верно", wrong:["Нет, неверно"]},
+{topic:"Перевод UZ→RU", q:'«Barqarorlik» so\'zi ruschaga «Благополучие» deb tarjima qilinadi. Bu to\'g\'rimi?', correct:"Нет, неверно", wrong:["Да, верно"]},
+{topic:"Перевод UZ→RU", q:'«Vaziyat» so\'zi ruschaga «Ситуация» deb tarjima qilinadi. Bu to\'g\'rimi?', correct:"Да, верно", wrong:["Нет, неверно"]},
+{topic:"Перевод UZ→RU", q:'«Vahima» so\'zi ruschaga «Приступ» deb tarjima qilinadi. Bu to\'g\'rimi?', correct:"Нет, неверно", wrong:["Да, верно"]},
+{topic:"Перевод UZ→RU", q:'«Zararlangan» so\'zi ruschaga «Поврежденный» deb tarjima qilinadi. Bu to\'g\'rimi?', correct:"Да, верно", wrong:["Нет, неверно"]},
+{topic:"Перевод UZ→RU", q:'«Ishonmoq» so\'zi ruschaga «Использовать» deb tarjima qilinadi. Bu to\'g\'rimi?', correct:"Нет, неверно", wrong:["Да, верно"]},
+{topic:"Перевод UZ→RU", q:'«Ishtirokchi» so\'zi ruscha «Организатор» deb tarjima qilinadi. Bu to\'g\'rimi?', correct:"Нет, неверно", wrong:["Да, верно"]},
+{topic:"Перевод UZ→RU", q:'«Imkoniyat» so\'zi ruschaga «Возможность» deb tarjima qilinadi. Bu to\'g\'rimi?', correct:"Да, верно", wrong:["Нет, неверно"]},
+{topic:"Перевод UZ→RU", q:'«Kamchilik» so\'zi ruscha «Ошибка» deb tarjima qilinadi. Bu to\'g\'rimi?', correct:"Нет, неверно", wrong:["Да, верно"]},
+{topic:"Перевод UZ→RU", q:'«Loyiha» so\'zi ruschaga «Проект» deb tarjima qilinadi. Bu to\'g\'rimi?', correct:"Да, верно", wrong:["Нет, неверно"]},
+{topic:"Перевод UZ→RU", q:'«Ruxsat» so\'zi ruschaga «Доверие» deb tarjima qilinadi. Bu to\'g\'rimi?', correct:"Нет, неверно", wrong:["Да, верно"]},
+{topic:"Перевод UZ→RU", q:'«Tarkib» so\'zi ruschaga «Состав» deb tarjima qilinadi. Bu to\'g\'rimi?', correct:"Да, верно", wrong:["Нет, неверно"]},
+{topic:"Перевод UZ→RU", q:'«Tadbir» so\'zi ruschaga «Мероприятие» deb tarjima qilinadi. Bu to\'g\'rimi?', correct:"Да, верно", wrong:["Нет, неверно"]},
+{topic:"Перевод UZ→RU", q:'«Tartib» so\'zi ruschaga «Порядок» deb tarjima qilinadi. Bu to\'g\'rimi?', correct:"Да, верно", wrong:["Нет, неверно"]},
+{topic:"Перевод UZ→RU", q:'«Taklif» so\'zi ruscha «Предложение» ma\'nosini bildiradi. Bu to\'g\'rimi?', correct:"Да, верно", wrong:["Нет, неверно"]},
+{topic:"Перевод UZ→RU", q:'«Taassurot» so\'zi ruschaga «Благодарность» deb tarjima qilinadi. Bu to\'g\'rimi?', correct:"Нет, неверно", wrong:["Да, верно"]},
+{topic:"Перевод UZ→RU", q:'«Maslahatlashmoq» so\'zi ruschaga «Встречать» deb tarjima qilinadi. Bu to\'g\'rimi?', correct:"Нет, неверно", wrong:["Да, верно"]},
+{topic:"Перевод UZ→RU", q:'«Mas\'uliyat» so\'zi ruschaga «Обязанность» deb tarjima qilinadi. Bu to\'g\'rimi?', correct:"Да, верно", wrong:["Нет, неверно"]},
+{topic:"Перевод UZ→RU", q:'«Moyil» so\'zi ruschaga «Склонный» deb tarjima qilinadi. Bu to\'g\'rimi?', correct:"Да, верно", wrong:["Нет, неверно"]},
+{topic:"Перевод UZ→RU", q:'«Bedavo» so\'zi ruschaga «Неизлечимый» deb tarjima qilinadi. Bu to\'g\'rimi?', correct:"Да, верно", wrong:["Нет, неверно"]},
+{topic:"Перевод UZ→RU", q:'«Munozara» so\'zi ruschaga «Собрание» deb tarjima qilinadi. Bu to\'g\'rimi?', correct:"Нет, неверно", wrong:["Да, верно"]},
+{topic:"Перевод UZ→RU", q:'«Muhit» so\'zi ruschaga «Вокруг» deb tarjima qilinadi. Bu to\'g\'rimi?', correct:"Нет, неверно", wrong:["Да, верно"]},
+{topic:"Перевод UZ→RU", q:'«Nuqson» so\'zi ruschaga «Дефект» deb tarjima qilinadi. Bu to\'g\'rimi?', correct:"Да, верно", wrong:["Нет, неверно"]},
+{topic:"Перевод UZ→RU", q:'«Faoliyat» so\'zi ruschaga «Деятельность» deb tarjima qilinadi. Bu to\'g\'rimi?', correct:"Да, верно", wrong:["Нет, неверно"]},
+{topic:"Перевод UZ→RU", q:'«O\'lchamoq» so\'zi ruschaga «Опираться» deb tarjima qilinadi. Bu to\'g\'rimi?', correct:"Нет, неверно", wrong:["Да, верно"]},
+{topic:"Перевод UZ→RU", q:'«O\'rgatmoq» fe\'li o\'zbekchaga «Изучить» deb tarjima qilinadi. Bu to\'g\'rimi?', correct:"Нет, неверно", wrong:["Да, верно"]},
+{topic:"Перевод UZ→RU", q:'«Eslamoq» so\'zi ruschaga «Вспоминать» deb tarjima qilinadi. Bu to\'g\'rimi?', correct:"Да, верно", wrong:["Нет, неверно"]},
+
+// --- История медицины и общие факты ---
+{topic:"История / Факты", q:'Tatar tili turkiy tillar guruhiga kirmaydi. Bu to\'g\'rimi?', correct:"Нет, неверно", wrong:["Да, верно"]},
+{topic:"История / Факты", q:'Chechakka qarshi vaksinani Edvard Jenner ishlab chiqqan. Bu to\'g\'rimi?', correct:"Да, верно", wrong:["Нет, неверно"]},
+{topic:"История / Факты", q:'Penetsillin kashfiyotchisi Aleksandr Fleming hisoblanadi. Bu to\'g\'rimi?', correct:"Да, верно", wrong:["Нет, неверно"]},
+{topic:"История / Факты", q:'Alisher Navoiy «Aliyi fikrat» deb Abu Ali ibn Sinoni ulug\'lagan. Bu to\'g\'rimi?', correct:"Да, верно", wrong:["Нет, неверно"]},
+{topic:"История / Факты", q:'Lui Paster mikroblar nazariyasi va qutirishga qarshi vaksina yaratuvchisi hisoblanadi. Bu to\'g\'rimi?', correct:"Да, верно", wrong:["Нет, неверно"]},
+{topic:"История / Факты", q:'Kevin Systrom rentgen nurlari kashfiyotchisi sifatida mashhur bo\'lgan. Bu to\'g\'rimi?', correct:"Нет, неверно", wrong:["Да, верно"]},
+{topic:"История / Факты", q:'Florens Naytingeyl zamonaviy hamshiralik kasbining asoschisi hisoblanadi. Bu to\'g\'rimi?', correct:"Да, верно", wrong:["Нет, неверно"]},
+{topic:"История / Факты", q:'Abu Ali ibn Sinoning «Tib qonunlari» asari 4 qismdan iborat. Bu to\'g\'rimi?', correct:"Нет, неверно", wrong:["Да, верно"]},
+{topic:"История / Факты", q:'Abu Ali ibn Sino sharqda «Shayx ur rais» nomi bilan ham mashhur bo\'lgan. Bu to\'g\'rimi?', correct:"Да, верно", wrong:["Нет, неверно"]},
+{topic:"История / Факты", q:'Abu Ali ibn Sino Samarqand yaqinidagi Xartang qishlog\'ida tug\'ilgan. Bu to\'g\'rimi?', correct:"Нет, неверно", wrong:["Да, верно"]},
+{topic:"История / Факты", q:'Abu Rayhon Beruniyning dorishunoslikka bag\'ishlangan asari «Saydana» deb ataladi. Bu to\'g\'rimi?', correct:"Да, верно", wrong:["Нет, неверно"]},
+{topic:"История / Факты", q:'Alisher Navoiy «Dorush-shifo» kasalxonasini Samarqandda qurdirgan. Bu to\'g\'rimi?', correct:"Нет, неверно", wrong:["Да, верно"]},
+{topic:"История / Факты", q:'Deontologiya tushunchasi XVI asr boshlarida ingliz faylasufi Bentam tomonidan taomilga kiritilgan. Bu to\'g\'rimi?', correct:"Нет, неверно", wrong:["Да, верно"]},
+{topic:"История / Факты", q:'«Bemorga zarar keltirma» iborasi mashhur faylasuf Aristotel tomonidan aytilgandir. Bu to\'g\'rimi?', correct:"Нет, неверно", wrong:["Да, верно"]},
+{topic:"История / Факты", q:'O\'zbek tili Oltoy tillar oilasiga kiruvchi til hisoblanadi. Bu to\'g\'rimi?', correct:"Да, верно", wrong:["Нет, неверно"]},
+{topic:"История / Факты", q:'Tojik tili turkiy tillar guruhiga kirmaydi. Bu to\'g\'rimi?', correct:"Да, верно", wrong:["Нет, неверно"]},
+{topic:"История / Факты", q:'O\'zbek tiliga Davlat tili maqomi berish haqidagi Qonun 1989-yil 21-oktabrda qabul qilingan. Bu to\'g\'rimi?', correct:"Да, верно", wrong:["Нет, неверно"]},
+
+// ════════════════════════════════════════════════
+// БЛОК 2: ПЕРЕВОДЫ (вопросы 101–200)
+// 4 варианта ответа
+// ════════════════════════════════════════════════
+
+// --- Названия болезней ---
+{topic:"Медицинские термины", q:'Bu gapda qaysi kasallik haqida aytilgan?\nТуберкулёз — keng tarqalgan yuqumli kasallik.', correct:"Sil (tuberkulyoz)", wrong:["Qizamiq", "Suvchechak", "Gripp"]},
+{topic:"Медицинские термины", q:'Bu gapda qaysi kasallik haqida aytilgan?\nВетряная оспа – o\'tkir virusli kasallik.', correct:"Suvchechak", wrong:["Sil", "Qizamiq", "Gripp"]},
+{topic:"Медицинские термины", q:'Bu gapda qaysi kasallik haqida aytilgan?\nКорь – xavfli virusli infeksiya.', correct:"Qizamiq", wrong:["Sil", "Suvchechak", "Gripp"]},
+{topic:"Медицинские термины", q:'Bemorda qorataloq kattalashganligi aniqlandi. Bu gapdagi a\'zo qaysi?', correct:"Qorataloq (селезёнка)", wrong:["Jigar (печень)", "Buyrak (почка)", "O\'pka (лёгкое)"]},
+{topic:"Медицинские термины", q:'Bachadon bilan bog\'liq kasalliklar ayollarda uchraydigan dolzarb muammodir. «Bachadon» ruscha nima?', correct:"Матка", wrong:["Яичник", "Мочевой пузырь", "Почка"]},
+
+// --- Переводы RU→UZ (прямой вопрос) ---
+{topic:"Перевод RU→UZ", q:'«Современная медицина» so\'zining o\'zbekcha tarjimasi qaysi?', correct:"Zamonaviy tibbiyot", wrong:["Qadimiy tibbiyot", "Zamonaviy biologiya", "Tibbiy fan"]},
+{topic:"Перевод RU→UZ", q:'«Анализ» so\'zining o\'zbekcha tarjimasi qaysi?', correct:"Tahlil", wrong:["Natija", "Tashxis", "Tekshiruv"]},
+{topic:"Перевод RU→UZ", q:'«Гарантия» so\'zining o\'zbekcha tarjimasi qaysi?', correct:"Kafolat", wrong:["Ishonch", "Natija", "Imkoniyat"]},
+{topic:"Перевод RU→UZ", q:'«Доверие» so\'zining to\'g\'ri tarjimasi qaysi?', correct:"Ishonch", wrong:["Kafolat", "Imkoniyat", "Natija"]},
+{topic:"Перевод RU→UZ", q:'«Возможность» so\'zining tarjimasi qaysi?', correct:"Imkoniyat", wrong:["Ishonch", "Kafolat", "Vaziyat"]},
+{topic:"Перевод RU→UZ", q:'«Направление» so\'zining to\'g\'ri tarjimasi qaysi?', correct:"Yo\'nalish", wrong:["Manzil", "Harakat", "Ko\'rsatma"]},
+{topic:"Перевод RU→UZ", q:'«Наблюдение» so\'zining o\'zbekcha tarjimasi qaysi?', correct:"Kuzatish", wrong:["Tekshiruv", "O\'lchash", "Tahlil"]},
+{topic:"Перевод RU→UZ", q:'«Обеспечение» so\'zining o\'zbekcha tarjimasi qaysi?', correct:"Ta\'minlash", wrong:["Kafolat", "Tayyorlash", "Qo\'llash"]},
+{topic:"Перевод RU→UZ", q:'«Основа» so\'zining to\'g\'ri tarjimasi qaysi?', correct:"Asos", wrong:["Tarkib", "Mohiyat", "Boshlang\'ich"]},
+{topic:"Перевод RU→UZ", q:'«Вознаграждать» so\'zining to\'g\'ri tarjimasi qaysi?', correct:"Mukofotlamoq", wrong:["Rag\'batlamoq", "To\'lamoq", "Ulashmoq"]},
+{topic:"Перевод RU→UZ", q:'«Выбирать» so\'zining to\'g\'ri tarjimasi qaysi?', correct:"Tanlamoq", wrong:["Olmoq", "Topmoq", "Ko\'rsatmoq"]},
+{topic:"Перевод RU→UZ", q:'«Изобретение» so\'zining o\'zbekcha tarjimasi qaysi?', correct:"Ixtiro", wrong:["Kashfiyot", "Loyiha", "Yangilik"]},
+{topic:"Перевод RU→UZ", q:'«Искусственный» so\'zining to\'g\'ri tarjimasi qaysi?', correct:"Sun\'iy", wrong:["Tabiiy", "Qo\'lda yasalgan", "Mexanik"]},
+{topic:"Перевод RU→UZ", q:'«Идея» so\'zining o\'zbekcha tarjimasi qaysi?', correct:"G\'oya", wrong:["Fikr", "Taklif", "Loyiha"]},
+{topic:"Перевод RU→UZ", q:'«Общение» so\'zining tarjimasini ko\'rsating.', correct:"Muloqot", wrong:["Hamkorlik", "Uchrashish", "Suhbat"]},
+{topic:"Перевод RU→UZ", q:'«Ответственность» so\'zining tarjimasini belgilang.', correct:"Mas\'uliyat", wrong:["Burch", "Vazifa", "Huquq"]},
+{topic:"Перевод RU→UZ", q:'«Отправлять» so\'zining to\'g\'ri tarjimasini belgilang.', correct:"Yubormoq", wrong:["Topshirmoq", "Olib bormoq", "Jo\'natmoq"]},
+{topic:"Перевод RU→UZ", q:'«Опасность» so\'zining to\'g\'ri tarjimasini belgilang.', correct:"Xavf", wrong:["Xatar", "Muammo", "Zarar"]},
+{topic:"Перевод RU→UZ", q:'«Поощрение» so\'zining o\'zbekcha tarjimasini belgilang.', correct:"Rag\'batlantirish", wrong:["Mukofotlash", "Taqdirlamoq", "Baholash"]},
+{topic:"Перевод RU→UZ", q:'«Предупреждение» so\'zining o\'zbekcha tarjimasini belgilang.', correct:"Ogohlantirish", wrong:["Taqiqlash", "Bildirishnoma", "Xabar berish"]},
+{topic:"Перевод RU→UZ", q:'«Потребность» so\'zining o\'zbekcha tarjimasini belgilang.', correct:"Ehtiyoj", wrong:["Talab", "Istak", "Zaruriyat"]},
+{topic:"Перевод RU→UZ", q:'«Реформа» so\'zining to\'g\'ri tarjimasini belgilang.', correct:"Islohot", wrong:["O\'zgarish", "Yangilik", "Qayta qurish"]},
+{topic:"Перевод RU→UZ", q:'«Решение» so\'zining o\'zbekcha tarjimasini belgilang.', correct:"Qaror", wrong:["Javob", "Natija", "Xulosa"]},
+{topic:"Перевод RU→UZ", q:'«Убеждать» so\'zining o\'zbekcha tarjimasi qaysi?', correct:"Ishontirmoq", wrong:["Tushuntirmoq", "Majburlamoq", "So\'ramoq"]},
+{topic:"Перевод RU→UZ", q:'«Улучшать» so\'zining o\'zbekcha tarjimasini belgilang.', correct:"Yaxshilamoq", wrong:["O\'zgartirmoq", "Takomillashtirmoq", "Rivojlantirmoq"]},
+{topic:"Перевод RU→UZ", q:'«Условия» so\'zining tarjimasi qaysi?', correct:"Sharoit", wrong:["Qoida", "Tartib", "Holat"]},
+{topic:"Перевод RU→UZ", q:'«Достоверный» so\'zining o\'zbekcha tarjimasi qaysi?', correct:"Ishonchli", wrong:["To\'g\'ri", "Aniq", "Haqiqiy"]},
+{topic:"Перевод RU→UZ", q:'«Бесполезный» so\'zining o\'zbekcha tarjimasi qaysi?', correct:"Foydasiz", wrong:["Zararli", "Keraksiz", "Yaroqsiz"]},
+{topic:"Перевод RU→UZ", q:'«Беспокойствие» so\'zining o\'zbekcha tarjimasi qaysi?', correct:"Bezovtalik", wrong:["Qo\'rquv", "Tashvish", "Xavotir"]},
+
+// --- Переводы UZ→RU (прямой вопрос) ---
+{topic:"Перевод UZ→RU", q:'«Asramoq» so\'zining ruscha tarjimasini belgilang.', correct:"Беречь", wrong:["Сохранять", "Охранять", "Хранить"]},
+{topic:"Перевод UZ→RU", q:'«Jamiyat» so\'zining ruscha tarjimasini belgilang.', correct:"Общество", wrong:["Государство", "Среда", "Коллектив"]},
+{topic:"Перевод UZ→RU", q:'«Iste\'molchi» so\'zining ruscha tarjimasini belgilang.', correct:"Потребитель", wrong:["Покупатель", "Пользователь", "Клиент"]},
+{topic:"Перевод UZ→RU", q:'«Muolaja vositasi» so\'zining tarjimasini ko\'rsating.', correct:"Лечебное средство", wrong:["Лекарство", "Препарат", "Назначение лечения"]},
+{topic:"Перевод UZ→RU", q:'«Bezovtalik» so\'zining to\'g\'ri tarjimasini belgilang.', correct:"Беспокойство", wrong:["Тревога", "Страх", "Волнение"]},
+{topic:"Перевод UZ→RU", q:'«Foydasiz» so\'zining ruscha tarjimasini belgilang.', correct:"Бесполезный", wrong:["Вредный", "Ненужный", "Бессмысленный"]},
+{topic:"Перевод UZ→RU", q:'«Farovonlik» so\'zining ruscha tarjimasini belgilang.', correct:"Благополучие", wrong:["Стабильность", "Процветание", "Достаток"]},
+{topic:"Перевод UZ→RU", q:'«Dunyoqarash» so\'zining to\'g\'ri tarjimasini belgilang.', correct:"Мировоззрение", wrong:["Взгляды", "Мировоззрение", "Кругозор"]},
+{topic:"Перевод UZ→RU", q:'«Xushmuomalalik» so\'zining ruscha tarjimasini belgilang.', correct:"Вежливость", wrong:["Доброта", "Тактичность", "Обходительность"]},
+{topic:"Перевод UZ→RU", q:'«Samimiylik» so\'zining ruscha tarjimasini ko\'rsating.', correct:"Искренность", wrong:["Доброта", "Честность", "Открытость"]},
+{topic:"Перевод UZ→RU", q:'«G\'amxo\'rlik» so\'zining ruscha tarjimasini belgilang.', correct:"Забота", wrong:["Внимание", "Опека", "Беспокойство"]},
+{topic:"Перевод UZ→RU", q:'«Mehribonlik» so\'zining ruscha tarjimasini belgilang.', correct:"Доброта", wrong:["Ласка", "Забота", "Мягкость"]},
+{topic:"Перевод UZ→RU", q:'«Ishonch» so\'zining ruscha tarjimasini belgilang.', correct:"Доверие", wrong:["Уверенность", "Гарантия", "Надёжность"]},
+{topic:"Перевод UZ→RU", q:'«Kafolat» so\'zining ruscha tarjimasini belgilang.', correct:"Гарантия", wrong:["Доверие", "Уверенность", "Обещание"]},
+{topic:"Перевод UZ→RU", q:'«Imkoniyat» so\'zining tarjimasini ko\'rsating.', correct:"Возможность", wrong:["Способность", "Шанс", "Право"]},
+{topic:"Перевод UZ→RU", q:'«Yo\'nalish» so\'zining ruscha tarjimasini belgilang.', correct:"Направление", wrong:["Путь", "Маршрут", "Ориентир"]},
+{topic:"Перевод UZ→RU", q:'«Kuzatish» so\'zining ruscha tarjimasini belgilang.', correct:"Наблюдение", wrong:["Осмотр", "Контроль", "Слежка"]},
+{topic:"Перевод UZ→RU", q:'«Ta\'minlash» so\'zining ruscha tarjimasini belgilang.', correct:"Обеспечение", wrong:["Снабжение", "Поставка", "Предоставление"]},
+{topic:"Перевод UZ→RU", q:'«Belgilamoq» so\'zining ruscha tarjimasini belgilang.', correct:"Обозначать", wrong:["Определять", "Указывать", "Отмечать"]},
+{topic:"Перевод UZ→RU", q:'«Jarayon» so\'zining ruscha tarjimasini belgilang.', correct:"Процесс", wrong:["Действие", "Ход", "Этап"]},
+{topic:"Перевод UZ→RU", q:'«Taraqqiyot» so\'zining ruscha tarjimasini belgilang.', correct:"Развитие", wrong:["Прогресс", "Рост", "Совершенствование"]},
+{topic:"Перевод UZ→RU", q:'«Loyiha» so\'zining ruscha tarjimasini belgilang.', correct:"Проект", wrong:["План", "Программа", "Схема"]},
+{topic:"Перевод UZ→RU", q:'«Talab» so\'zining ruscha tarjimasini belgilang.', correct:"Требование", wrong:["Запрос", "Просьба", "Норма"]},
+{topic:"Перевод UZ→RU", q:'«Vaziyat» so\'zining ruscha tarjimasini belgilang.', correct:"Ситуация", wrong:["Обстановка", "Положение", "Случай"]},
+{topic:"Перевод UZ→RU", q:'«Tarkib» so\'zining ruscha tarjimasini belgilang.', correct:"Состав", wrong:["Структура", "Содержание", "Строение"]},
+{topic:"Перевод UZ→RU", q:'«Sharoit» so\'zining ruscha tarjimasini belgilang.', correct:"Условия", wrong:["Обстановка", "Среда", "Обстоятельства"]},
+{topic:"Перевод UZ→RU", q:'«Barqarorlik» so\'zining ruscha tarjimasini belgilang.', correct:"Стабильность", wrong:["Устойчивость", "Постоянство", "Благополучие"]},
+{topic:"Перевод UZ→RU", q:'«Xotirjamlik» so\'zining ruscha tarjimasini belgilang.', correct:"Спокойствие", wrong:["Тишина", "Равновесие", "Умиротворение"]},
+{topic:"Перевод UZ→RU", q:'«Ishonchli» so\'zining ruscha tarjimasini belgilang.', correct:"Надёжный", wrong:["Достоверный", "Уверенный", "Верный"]},
+
+// ════════════════════════════════════════════════
+// БЛОК 3: СПЕЦИАЛЬНОСТИ ВРАЧЕЙ (120–138)
+// ════════════════════════════════════════════════
+
+{topic:"Специальности врачей", q:'Umurtqa pog\'onasidagi kasalliklarni o\'rganadigan shifokor.', correct:"Vertebrolog", wrong:["Nevrolog", "Ortoped", "Travmatolog"]},
+{topic:"Специальности врачей", q:'Soch follikulalari va bosh terisi bilan shug\'ullanuvchi shifokor.', correct:"Trixolog", wrong:["Dermatolog", "Kosmetolog", "Allergolog"]},
+{topic:"Специальности врачей", q:'Eshitish qobiliyati pasayishi va karlikni davolovchi shifokor.', correct:"Surdolog", wrong:["Otorinolaringolog", "Nevrolog", "Audiolog"]},
+{topic:"Специальности врачей", q:'Buyrak faoliyatini o\'rganadigan shifokor.', correct:"Nefrolog", wrong:["Urolog", "Endokrinolog", "Gematolog"]},
+{topic:"Специальности врачей", q:'Irsiy kasalliklarni o\'rganadigan shifokor.', correct:"Genetik", wrong:["Immunolog", "Biolog", "Patolog"]},
+{topic:"Специальности врачей", q:'Immunitet bilan shug\'ullanuvchi shifokor.', correct:"Immunolog", wrong:["Allergolog", "Genetik", "Infektsionist"]},
+{topic:"Специальности врачей", q:'Oyoq panjasi va tovon kasalliklarini davolovchi shifokor.', correct:"Podiatr", wrong:["Ortoped", "Travmatolog", "Revmatolog"]},
+{topic:"Специальности врачей", q:'Qon va qon yaratuvchi a\'zolarni davolovchi shifokor.', correct:"Gematolog", wrong:["Onkolog", "Kardiolog", "Immunolog"]},
+{topic:"Специальности врачей", q:'Jigar va o\'t yo\'llari bilan shug\'ullanuvchi shifokor.', correct:"Gepatolog", wrong:["Gastroenterolog", "Proktolog", "Nefrolog"]},
+{topic:"Специальности врачей", q:'Markaziy va periferik asab tizimini davolovchi shifokor.', correct:"Nevrolog", wrong:["Psixiatr", "Neyroxirurg", "Psixolog"]},
+{topic:"Специальности врачей", q:'Zamburug\'li infeksiyalarni davolovchi shifokor.', correct:"Mikolog", wrong:["Infektsionist", "Dermatolog", "Parazitolog"]},
+{topic:"Специальности врачей", q:'Nafas olish a\'zolari kasalliklarini davolovchi shifokor.', correct:"Pulmonolog", wrong:["Ftiziatr", "Torakkal jarroh", "Otorinolaringolog"]},
+{topic:"Специальности врачей", q:'Sil kasalligini davolovchi shifokor.', correct:"Ftiziatr", wrong:["Pulmonolog", "Infektsionist", "Epidemiolog"]},
+{topic:"Специальности врачей", q:'Uyqu buzilishlari bilan shug\'ullanuvchi shifokor.', correct:"Somnolog", wrong:["Psixiatr", "Nevrolog", "Psixoterapeut"]},
+{topic:"Специальности врачей", q:'Arteriya va vena qon tomirlari bilan shug\'ullanuvchi shifokor.', correct:"Angioxirurg", wrong:["Kardiolog", "Flebot", "Torakkal jarroh"]},
+{topic:"Специальности врачей", q:'Ichki sekretsiya bezlari va gormonlar bilan shug\'ullanuvchi shifokor.', correct:"Endokrinolog", wrong:["Nefrolog", "Gastroenterolog", "Immunolog"]},
+{topic:"Специальности врачей", q:'Tayanch-harakat tizimi jarohatlarini davolovchi shifokor.', correct:"Travmatolog-ortoped", wrong:["Revmatolog", "Neyroxirurg", "Reabilitolog"]},
+{topic:"Специальности врачей", q:'Miya va umurtqa jarrohligi bilan shug\'ullanuvchi shifokor.', correct:"Neyroxirurg", wrong:["Nevrolog", "Bosh miya jarrohi", "Vertebrolog"]},
+{topic:"Специальности врачей", q:'Ovqat hazm qilish tizimi kasalliklarini davolovchi shifokor.', correct:"Gastroenterolog", wrong:["Gepatolog", "Proktolog", "Nefrolog"]},
+
+// ════════════════════════════════════════════════
+// БЛОК 4: ГРАММАТИКА (вопросы 300–400)
+// ⚠️ Варианты придуманы — на экзамене будут другие предложения!
+// ════════════════════════════════════════════════
+
+// --- Синонимы / Антонимы / Омонимы ---
+{topic:"Лексика (синонимы/антонимы)", q:'«Yaxshilar ko\'paysin, yomon qolmasin» gapida qanday so\'zlar qatnashgan?', correct:"Antonimlar (qarama-qarshi ma\'noli so\'zlar)", wrong:["Sinonimlar", "Omonimlar", "Paronimlar"], approx:true},
+{topic:"Лексика (синонимы/антонимы)", q:'«Men sizga baxtli, saodatli hayot tilayman» gapida qanday so\'zlar qatnashgan?', correct:"Sinonimlar", wrong:["Antonimlar", "Omonimlar", "Takror so\'zlar"], approx:true},
+{topic:"Лексика (синонимы/антонимы)", q:'«Dono hammani o\'ylaydi, ahmoq o\'zini o\'ylaydi» gapida qanday so\'zlar qatnashgan?', correct:"Antonimlar", wrong:["Sinonimlar", "Omonimlar", "Juft so\'zlar"], approx:true},
+{topic:"Лексика (синонимы/антонимы)", q:'«Uyingni doimo toza, ozoda tutgin» gapida qanday so\'zlar qatnashgan?', correct:"Sinonimlar", wrong:["Antonimlar", "Omonimlar", "Takror so\'zlar"], approx:true},
+{topic:"Лексика (синонимы/антонимы)", q:'«Shirin, mazali ovqatlar» birikmasi qanday so\'zlarni o\'z ichiga oladi?', correct:"Sinonimlar", wrong:["Antonimlar", "Omonimlar", "Takror so\'zlar"], approx:true},
+{topic:"Лексика (синонимы/антонимы)", q:'«Ot insonga vafodor jonivor. Koptokni ot» gapida qanday hodisa kuzatiladi?', correct:"Omonim so\'z", wrong:["Sinonim so\'z", "Antonim so\'z", "Ko\'chma ma\'no"], approx:true},
+{topic:"Лексика (синонимы/антонимы)", q:'«Kulmoq-yig\'lamoq, turmoq-o\'tirish» — bu qanday so\'zlar?', correct:"Antonimlar", wrong:["Sinonimlar", "Omonimlar", "Juft so\'zlar"], approx:true},
+{topic:"Лексика (синонимы/антонимы)", q:'«Dangasa, yalqov, tanbal» — bu qanday so\'zlar?', correct:"Sinonimlar", wrong:["Antonimlar", "Omonimlar", "Umumlashtiruvchi so\'zlar"], approx:true},
+{topic:"Лексика (синонимы/антонимы)", q:'«Issiq-sovuq, foydali-zararli» — bu qanday so\'zlar?', correct:"Antonimlar", wrong:["Sinonimlar", "Omonimlar", "Juft so\'zlar"], approx:true},
+{topic:"Лексика (синонимы/антонимы)", q:'«Yurt, vatan, mamlakat, diyor» — bu qanday so\'zlar?', correct:"Sinonimlar", wrong:["Antonimlar", "Omonimlar", "Mavhum otlar"], approx:true},
+{topic:"Лексика (синонимы/антонимы)", q:'«Shamol, bo\'ron, shabada» — bu qanday so\'zlar?', correct:"Sinonimlar", wrong:["Antonimlar", "Omonimlar", "Juft so\'zlar"], approx:true},
+{topic:"Лексика (синонимы/антонимы)", q:'«Ko\'k (rang) – ko\'k (osmon)» — bu qanday hodisa?', correct:"Omonimlar", wrong:["Sinonimlar", "Ko\'chma ma\'no", "Paronimlar"], approx:true},
+{topic:"Лексика (синонимы/антонимы)", q:'«Xonadonimizga quvonch, shodlik kirib keldi» gapida qanday so\'zlar qatnashgan?', correct:"Sinonimlar", wrong:["Antonimlar", "Omonimlar", "Juft so\'zlar"], approx:true},
+
+// --- Типы слов ---
+{topic:"Söz turlari (словообразование)", q:'«Baland-baland binolar» gapida qanday so\'z shakli ishlatilgan?', correct:"Takror so\'z (intensiv shakl)", wrong:["Juft so\'z", "Qo\'shma so\'z", "Sinonim"], approx:true},
+{topic:"Söz turlari (словообразование)", q:'«Kecha-kunduz hushyor» gapida qanday so\'z ishlatilgan?', correct:"Juft so\'z", wrong:["Takror so\'z", "Qo\'shma so\'z", "Ravish"], approx:true},
+{topic:"Söz turlari (словообразование)", q:'«Qip-qizil atirgul» gapida qanday so\'z shakli ishlatilgan?', correct:"Intensiv (kuchaytiruvchi shakl)", wrong:["Takror so\'z", "Juft so\'z", "Sifat darajasi"], approx:true},
+{topic:"Söz turlari (словообразование)", q:'«Asalari» qanday so\'z?', correct:"Sodda so\'z", wrong:["Qo\'shma so\'z", "Juft so\'z", "Takror so\'z"], approx:true},
+{topic:"Söz turlari (словообразование)", q:'«Qancha-qancha» qanday so\'z?', correct:"Takror so\'z", wrong:["Juft so\'z", "Qo\'shma so\'z", "Olmosh"], approx:true},
+{topic:"Söz turlari (словообразование)", q:'«Mehmondo\'st» qanday so\'z?', correct:"Qo\'shma so\'z", wrong:["Juft so\'z", "Takror so\'z", "Sodda so\'z"], approx:true},
+{topic:"Söz turlari (словообразование)", q:'«Dasta-dasta» qanday so\'z?', correct:"Takror so\'z", wrong:["Juft so\'z", "Qo\'shma so\'z", "Ravish"], approx:true},
+{topic:"Söz turlari (словообразование)", q:'«Aka-uka» qanday so\'z?', correct:"Juft so\'z", wrong:["Takror so\'z", "Qo\'shma so\'z", "Ot"], approx:true},
+
+// --- Части речи ---
+{topic:"So\'z turkumlari (части речи)", q:'«Kitob, uy, odam» — bu so\'zlar qaysi so\'z turkumiga kiradi?', correct:"Ot so\'z turkumi", wrong:["Sifat so\'z turkumi", "Ravish so\'z turkumi", "Olmosh so\'z turkumi"], approx:true},
+{topic:"So\'z turkumlari (части речи)", q:'«Yaxshi, katta, chiroyli» — bu so\'zlar qaysi so\'z turkumiga kiradi?', correct:"Sifat so\'z turkumi", wrong:["Ot so\'z turkumi", "Ravish so\'z turkumi", "Fe\'l so\'z turkumi"], approx:true},
+{topic:"So\'z turkumlari (части речи)", q:'«Men, sen, u» — bu so\'zlar qaysi so\'z turkumiga kiradi?', correct:"Olmosh so\'z turkumi", wrong:["Ot so\'z turkumi", "Sifat so\'z turkumi", "Ravish so\'z turkumi"], approx:true},
+{topic:"So\'z turkumlari (части речи)", q:'«Tez, sekin, bugun» — bu so\'zlar qaysi so\'z turkumiga kiradi?', correct:"Ravish so\'z turkumi", wrong:["Sifat so\'z turkumi", "Ot so\'z turkumi", "Olmosh so\'z turkumi"], approx:true},
+{topic:"So\'z turkumlari (части речи)", q:'«Qip-qizil» so\'zi qaysi so\'z turkumiga kiradi?', correct:"Sifat", wrong:["Ravish", "Ot", "Fe\'l"], approx:true},
+{topic:"So\'z turkumlari (части речи)", q:'«Bemorlar» so\'zi qaysi so\'z turkumiga kiradi?', correct:"Ot", wrong:["Sifat", "Olmosh", "Fe\'l"], approx:true},
+{topic:"So\'z turkumlari (части речи)", q:'«Malakali» so\'zi qaysi so\'z turkumiga kiradi?', correct:"Sifat", wrong:["Ot", "Ravish", "Fe\'l"], approx:true},
+{topic:"So\'z turkumlari (части речи)", q:'«Biz» so\'zi qaysi so\'z turkumiga kiradi?', correct:"Olmosh", wrong:["Ot", "Sifat", "Fe\'l"], approx:true},
+{topic:"So\'z turkumlari (части речи)", q:'«Bugun» so\'zi qaysi so\'z turkumiga kiradi?', correct:"Ravish", wrong:["Ot", "Sifat", "Olmosh"], approx:true},
+{topic:"So\'z turkumlari (части речи)", q:'«Ertaga» so\'zi qaysi so\'z turkumiga kiradi?', correct:"Ravish", wrong:["Ot", "Sifat", "Olmosh"], approx:true},
+{topic:"So\'z turkumlari (части речи)", q:'«Siz» so\'zi qaysi so\'z turkumiga kiradi?', correct:"Olmosh", wrong:["Ot", "Sifat", "Fe\'l"], approx:true},
+{topic:"So\'z turkumlari (части речи)", q:'«Katta» so\'zi qaysi so\'z turkumiga kiradi?', correct:"Sifat", wrong:["Ot", "Ravish", "Olmosh"], approx:true},
+{topic:"So\'z turkumlari (части речи)", q:'«Saxovatli» so\'zi qaysi so\'z turkumiga kiradi?', correct:"Sifat", wrong:["Ot", "Ravish", "Fe\'l"], approx:true},
+{topic:"So\'z turkumlari (части речи)", q:'«Kichik» so\'zi qaysi so\'z turkumiga kiradi?', correct:"Sifat", wrong:["Ot", "Ravish", "Olmosh"], approx:true},
+
+// --- Mavhum otlar ---
+{topic:"So\'z turkumlari (части речи)", q:'Qaysi bandda mavhum otlar berilgan? (1)', correct:"Sevgi, baxt, umid", wrong:["Shifokor, kasalxona, dori", "Tez, sekin, kech", "Men, sen, u"], approx:true},
+{topic:"So\'z turkumlari (части речи)", q:'Qaysi bandda mavhum otlar berilgan? (2)', correct:"Fikr, orzu, g\'oya", wrong:["Kitob, uy, odam", "Yaxshi, katta, baland", "Erta, kecha, hozir"], approx:true},
+
+// --- Ravish turlari ---
+{topic:"Grammatika (грамматика)", q:'«To\'satdan» ravishi qaysi turga kiradi?', correct:"Vaqt ravishi", wrong:["O\'rin ravishi", "Holat ravishi", "Miqdor ravishi"], approx:true},
+{topic:"Grammatika (грамматика)", q:'«Ertalabdan» ravishi qaysi turga kiradi?', correct:"Vaqt ravishi", wrong:["O\'rin ravishi", "Holat ravishi", "Miqdor ravishi"], approx:true},
+{topic:"Grammatika (грамматика)", q:'«Uzoqdan» ravishi qaysi turga kiradi?', correct:"O\'rin ravishi", wrong:["Vaqt ravishi", "Holat ravishi", "Miqdor ravishi"], approx:true},
+{topic:"Grammatika (грамматика)", q:'«Xotirjamlik bilan» ravishi qaysi turga kiradi?', correct:"Holat ravishi", wrong:["Vaqt ravishi", "O\'rin ravishi", "Miqdor ravishi"], approx:true},
+
+// --- Fe'l (глагол) ---
+{topic:"Grammatika (грамматика)", q:'«Hamshira shifokorni chaqirib keldi» gapida qaysi fe\'l turi ishlatilgan?', correct:"Sodda fe\'l", wrong:["Qo\'shma fe\'l", "Bo\'lishsiz fe\'l", "O\'timsiz fe\'l"], approx:true},
+{topic:"Grammatika (грамматика)", q:'«Iqtisodiyotimiz tobora rivojlanib borayapti» gapida qaysi fe\'l turi ishlatilgan?', correct:"Qo\'shma fe\'l", wrong:["Sodda fe\'l", "Bo\'lishsiz fe\'l", "O\'timsiz fe\'l"], approx:true},
+{topic:"Grammatika (грамматика)", q:'Qaysi fe\'l bo\'lishli hisoblanadi?', correct:"Eshitayapti", wrong:["Eshitmayapti", "Kelmadi", "Bilmaydi"], approx:true},
+{topic:"Grammatika (грамматика)", q:'Qaysi fe\'l o\'timsiz hisoblanadi?', correct:"Yiqildi", wrong:["Eshitdi", "O\'qidi", "Ko\'rdi"], approx:true},
+{topic:"Grammatika (грамматика)", q:'Qaysi fe\'l o\'timli hisoblanadi?', correct:"Mutaxassislar taklifini o\'rganib chiqamiz", wrong:["Bola yiqildi", "U uxladi", "Shamol esdi"], approx:true},
+
+// --- Ko'chma ma'no / iboralar ---
+{topic:"Ko'chma ma'no va iboralar", q:'«Ko\'z» so\'zi ko\'chma ma\'noda nimani bildiradi?', correct:"Manba (masalan: suv ko\'zi)", wrong:["Ko\'rish organi", "Teshik", "Nur"], approx:true},
+{topic:"Ko'chma ma'no va iboralar", q:'«Oltin» so\'zi ko\'chma ma\'noda nimani bildiradi?', correct:"Qimmatli, aziz", wrong:["Metall", "Sariq rang", "Boylik"], approx:true},
+{topic:"Ko'chma ma'no va iboralar", q:'«Qovog\'idan qor yog\'moq» iborasining antonimi qaysi?', correct:"Og\'zi qulog\'ida", wrong:["Ko\'ngli tushdi", "Yuragi siqildi", "Dumi xurjun bo\'ldi"], approx:true},
+{topic:"Ko'chma ma'no va iboralar", q:'«Tomdan … tushganday» iborasidagi bo\'sh joy nimaga to\'ldiriladi?', correct:"Ari", wrong:["Tosh", "Suv", "Qor"], approx:true},
+
+// --- O'zbek alifbosi ---
+{topic:"O'zbek tili haqida", q:'O\'zbek alifbosi nechta harfdan iborat?', correct:"29 ta", wrong:["26 ta", "32 ta", "35 ta"]},
+{topic:"O'zbek tili haqida", q:'«Vatan qadrini bilmagan o\'z qadrini bilmas» maqolining ruscha tarjimasi qaysi?', correct:"Кто не ценит Родину, тот не ценит и себя", wrong:["Кто не любит Родину, тот не патриот", "Родина — мать, умей за неё постоять", "Нет ничего дороже Родины"], approx:true},
+{topic:"O'zbek tili haqida", q:'«Bulbul chamanni sevar, Odam Vatanni» maqolining ruscha tarjimasi qaysi?', correct:"Соловей любит цветник, человек любит Родину", wrong:["Птица любит свободу, человек — мир", "Соловей поёт в саду, человек — в стране", "Где родился, там и пригодился"], approx:true},
+
+// --- Афоризмы ---
+{topic:"История / Факты", q:'Gippokratning hikmati: «Shifokor davolaydi, … tuzatadi». Bo\'sh joyga nima qo\'yiladi?', correct:"Tabiat", wrong:["Dori", "Vaqt", "Jumrak"], approx:true},
+{topic:"История / Факты", q:'«Shifokorda lochinning ko\'zi, qiz bolaning qo\'li, … ning aqli va sherning yuragi bo\'lishi kerak». Bo\'sh joy?', correct:"Ilon (Змея)", wrong:["Burgut", "Tulki", "Bo\'ri"], approx:true},
+{topic:"История / Факты", q:'Abu Ali ibn Sino: «Agar yer yuzida chang va … bo\'lmaganda edi, insonlar ming yil umr ko\'rardi». Bo\'sh joy?', correct:"Mikrob", wrong:["Dard", "Kasallik", "Zahar"], approx:true},
+{topic:"История / Факты", q:'Abu Ali ibn Sino qaysi yillarda yashagan?', correct:"980–1037-yillar (X–XI asrlar)", wrong:["854–925-yillar (IX–X asrlar)", "1048–1122-yillar (XI–XII asrlar)", "1207–1273-yillar"]},
+
+];
+
+// Topics list
+const TOPICS = [...new Set(ALL_QUESTIONS.map(q => q.topic))];
+
+let questions = [...ALL_QUESTIONS];
+let filteredByTopic = null;
+let current = 0;
+let correct = 0;
+let wrong = 0;
+let answered = false;
+let wrongQuestions = [];
+let mode = 'quiz';
+
+function shuffle(arr) {
+  for (let i = arr.length - 1; i > 0; i--) {
+    const j = Math.floor(Math.random() * (i + 1));
+    [arr[i], arr[j]] = [arr[j], arr[i]];
+  }
+  return arr;
+}
+
+// Build topic buttons
+function buildTopicBar() {
+  const bar = document.getElementById('topicBar');
+  bar.innerHTML = '';
+  const allBtn = document.createElement('button');
+  allBtn.className = 'topic-btn active';
+  allBtn.textContent = '✦ Все темы';
+  allBtn.dataset.topic = '';
+  allBtn.addEventListener('click', function() {
+    document.querySelectorAll('.topic-btn').forEach(b => b.classList.remove('active'));
+    this.classList.add('active');
+    filteredByTopic = null;
+    restartWithFilter();
+  });
+  bar.appendChild(allBtn);
+  TOPICS.forEach(t => {
+    const btn = document.createElement('button');
+    btn.className = 'topic-btn';
+    btn.textContent = t;
+    btn.dataset.topic = t;
+    btn.addEventListener('click', function() {
+      document.querySelectorAll('.topic-btn').forEach(b => b.classList.remove('active'));
+      this.classList.add('active');
+      filteredByTopic = t;
+      restartWithFilter();
+    });
+    bar.appendChild(btn);
+  });
+}
+
+function getBaseQuestions() {
+  return filteredByTopic
+    ? ALL_QUESTIONS.filter(q => q.topic === filteredByTopic)
+    : [...ALL_QUESTIONS];
+}
+
+function restartWithFilter() {
+  questions = [...getBaseQuestions()];
+  current = 0; correct = 0; wrong = 0; wrongQuestions = []; answered = false;
+  setMode('quiz');
+  document.getElementById('quizMode').style.display = 'block';
+  document.getElementById('resultScreen').classList.remove('show');
+  updateStats(); loadQuestion();
+}
+
+function setMode(m) {
+  mode = m;
+  document.getElementById('modeQuiz').classList.toggle('active', m === 'quiz');
+  document.getElementById('modeBrowse').classList.toggle('active', m === 'browse');
+  document.getElementById('modeWrong').classList.toggle('active', m === 'wrong');
+  document.getElementById('quizMode').style.display = m === 'quiz' ? 'block' : 'none';
+  document.getElementById('browseMode').style.display = m === 'browse' ? 'block' : 'none';
+  document.getElementById('wrongMode').style.display = m === 'wrong' ? 'block' : 'none';
+  document.getElementById('searchWrap').classList.toggle('show', m === 'browse');
+  if (m === 'browse') renderBrowse(filteredByTopic ? ALL_QUESTIONS.filter(q => q.topic === filteredByTopic) : ALL_QUESTIONS);
+  if (m === 'wrong') renderWrong();
+}
+
+function escHtml(s) {
+  return String(s).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;');
+}
+
+function renderBrowse(qs) {
+  const el = document.getElementById('browseList');
+  el.innerHTML = '';
+  qs.forEach((q, i) => {
+    const div = document.createElement('div');
+    div.className = 'browse-card';
+    const approxBadge = q.approx ? '<span style="display:inline-block;background:rgba(224,86,160,0.12);border:1px solid rgba(224,86,160,0.3);border-radius:6px;padding:2px 8px;font-size:10px;color:var(--accent2);margin-left:6px;font-family:Unbounded,sans-serif">⚠️ ВАРИАНТЫ ПРИМЕРНЫЕ</span>' : '';
+    div.innerHTML = '<div class="q-num" style="font-size:10px;margin-bottom:6px;color:var(--muted)">№' + (i+1) + ' · ' + escHtml(q.topic) + approxBadge + '</div><div class="bq">' + escHtml(q.q) + '</div><div class="ba">✓ ' + escHtml(q.correct) + '</div><div class="toggle">▾</div>';
+    div.addEventListener('click', function() { this.classList.toggle('open'); });
+    el.appendChild(div);
+  });
+}
+
+function filterBrowse() {
+  const val = document.getElementById('searchInput').value.toLowerCase();
+  const base = filteredByTopic ? ALL_QUESTIONS.filter(q => q.topic === filteredByTopic) : ALL_QUESTIONS;
+  const filtered = base.filter(q => q.q.toLowerCase().includes(val) || q.correct.toLowerCase().includes(val));
+  renderBrowse(filtered);
+}
+
+function renderWrong() {
+  const el = document.getElementById('wrongList');
+  if (!wrongQuestions.length) {
+    el.innerHTML = '<div style="text-align:center;padding:60px;color:var(--muted)"><div style="font-size:48px;margin-bottom:16px">🎉</div><div style="font-size:18px">Ошибок нет! Пройдите тест сначала.</div></div>';
+    return;
+  }
+  el.innerHTML = '';
+  wrongQuestions.forEach(q => {
+    const div = document.createElement('div');
+    div.className = 'browse-card';
+    div.innerHTML = '<div class="q-num" style="font-size:10px;margin-bottom:6px;color:var(--red)">ОШИБКА · ' + escHtml(q.topic) + '</div><div class="bq">' + escHtml(q.q) + '</div><div class="ba">✓ ' + escHtml(q.correct) + '</div><div class="toggle">▾</div>';
+    div.addEventListener('click', function() { this.classList.toggle('open'); });
+    el.appendChild(div);
+  });
+}
+
+function updateStats() {
+  const done = correct + wrong;
+  document.getElementById('statTotal').textContent = questions.length;
+  document.getElementById('statCorrect').textContent = correct;
+  document.getElementById('statWrong').textContent = wrong;
+  const pct = questions.length ? Math.round(done / questions.length * 100) : 0;
+  document.getElementById('progressBar').style.width = pct + '%';
+}
+
+function loadQuestion() {
+  if (current >= questions.length) { showResult(); return; }
+  answered = false;
+  const q = questions[current];
+  document.getElementById('qNum').textContent = 'Вопрос ' + (current + 1) + ' / ' + questions.length;
+
+  // Topic tag
+  const tagEl = document.getElementById('qTopicTag');
+  let tagHtml = '<span class="q-topic-tag">' + escHtml(q.topic) + '</span>';
+  if (q.approx) tagHtml += '<span class="q-approx-badge">⚠️ варианты примерные</span>';
+  tagEl.innerHTML = tagHtml;
+
+  document.getElementById('qText').textContent = q.q;
+  document.getElementById('feedback').className = 'feedback';
+  document.getElementById('nextBtn').style.display = 'none';
+
+  const opts = shuffle([q.correct, ...q.wrong.slice(0, 3)]);
+  const container = document.getElementById('answers');
+  container.innerHTML = '';
+  opts.forEach(opt => {
+    const btn = document.createElement('button');
+    btn.className = 'answer-btn';
+    btn.type = 'button';
+    const span = document.createElement('span');
+    span.textContent = opt;
+    btn.appendChild(span);
+    btn.dataset.val = opt;
+    btn.addEventListener('click', function() { checkAnswer(this, this.dataset.val, q.correct); });
+    container.appendChild(btn);
+  });
+
+  const card = document.getElementById('questionCard');
+  card.style.animation = 'none';
+  void card.offsetHeight;
+  card.style.animation = 'slideUp 0.35s cubic-bezier(0.22, 1, 0.36, 1)';
+}
+
+function checkAnswer(btn, chosen, correctAns) {
+  if (answered) return;
+  answered = true;
+  const allBtns = document.querySelectorAll('.answer-btn');
+  allBtns.forEach(b => { b.disabled = true; });
+  const isCorrect = chosen === correctAns;
+  btn.classList.add(isCorrect ? 'correct' : 'wrong');
+  if (!isCorrect) {
+    allBtns.forEach(b => { if (b.dataset.val === correctAns) b.classList.add('correct'); });
+    wrong++;
+    wrongQuestions.push(questions[current]);
+  } else { correct++; }
+  const fb = document.getElementById('feedback');
+  fb.className = 'feedback show ' + (isCorrect ? 'ok' : 'err');
+  fb.querySelector('.icon').textContent = isCorrect ? '✓' : '✗';
+  if (isCorrect) {
+    fb.querySelector('.msg').textContent = 'To\'g\'ri! Правильно!';
+  } else {
+    fb.querySelector('.msg').innerHTML = 'To\'g\'ri javob: <span class="correct-ans">' + escHtml(correctAns) + '</span>';
+  }
+  document.getElementById('nextBtn').style.display = 'block';
+  updateStats();
+}
+
+function nextQuestion() { current++; loadQuestion(); }
+
+function showResult() {
+  document.getElementById('quizMode').style.display = 'none';
+  const rs = document.getElementById('resultScreen');
+  rs.classList.add('show');
+  const total = correct + wrong;
+  const pct = total ? Math.round(correct / total * 100) : 0;
+  document.getElementById('resultPct').textContent = pct + '%';
+  document.getElementById('resCorrect').textContent = correct;
+  document.getElementById('resWrong').textContent = wrong;
+  document.getElementById('resTotal').textContent = total;
+  let msg = pct >= 90 ? '🎉 A\'lo! Sессияga tayyor!' : pct >= 70 ? '👍 Yaxshi natija!' : pct >= 50 ? '📚 Yana o\'qish kerak.' : '💪 Mashq qilishni davom ettir!';
+  document.getElementById('resultMsg').textContent = msg;
+}
+
+function restart() {
+  questions = [...getBaseQuestions()];
+  current = 0; correct = 0; wrong = 0; wrongQuestions = []; answered = false;
+  setMode('quiz');
+  document.getElementById('quizMode').style.display = 'block';
+  document.getElementById('resultScreen').classList.remove('show');
+  updateStats(); loadQuestion();
+}
+
+function shuffleRestart() {
+  questions = shuffle([...getBaseQuestions()]);
+  current = 0; correct = 0; wrong = 0; wrongQuestions = []; answered = false;
+  setMode('quiz');
+  document.getElementById('quizMode').style.display = 'block';
+  document.getElementById('resultScreen').classList.remove('show');
+  updateStats(); loadQuestion();
+}
+
+document.getElementById('modeQuiz').addEventListener('click', function() { setMode('quiz'); });
+document.getElementById('modeBrowse').addEventListener('click', function() { setMode('browse'); });
+document.getElementById('modeWrong').addEventListener('click', function() { setMode('wrong'); });
+document.getElementById('btnRestart').addEventListener('click', restart);
+document.getElementById('btnShuffle').addEventListener('click', shuffleRestart);
+document.getElementById('nextBtn').addEventListener('click', nextQuestion);
+document.getElementById('btnRestartResult').addEventListener('click', restart);
+document.getElementById('btnWrongResult').addEventListener('click', function() { setMode('wrong'); });
+document.getElementById('searchInput').addEventListener('input', filterBrowse);
+
+document.addEventListener('keydown', function(e) {
+  if (mode !== 'quiz') return;
+  if (e.key === 'ArrowRight' || e.key === 'Enter') { if (answered) nextQuestion(); }
+  if (['1','2','3','4'].includes(e.key)) {
+    const idx = parseInt(e.key) - 1;
+    const btns = document.querySelectorAll('.answer-btn');
+    if (btns[idx] && !answered) btns[idx].click();
+  }
+});
+
+buildTopicBar();
+updateStats();
+loadQuestion();
+</script>
+</body>
+</html>
